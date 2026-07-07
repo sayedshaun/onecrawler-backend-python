@@ -1,8 +1,13 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 
-from src.api.security.verify.router import router as verify_router
+from src.api.security.dependencies import CurrentUser, get_current_user
+from src.api.security.schema import CurrentUserOut
 
-router = APIRouter(tags=["security"])
-# `prefix` must be passed to each include_router() call, not this constructor
-# — see the identical note in app/api/v1/crawler/router.py.
-router.include_router(verify_router, prefix="/security")
+router = APIRouter()
+
+
+@router.get("/verify", response_model=CurrentUserOut)
+async def verify_token(current_user: CurrentUser = Depends(get_current_user)):
+    return CurrentUserOut(
+        id=current_user.id, name=current_user.name, email=current_user.email, user_type=current_user.user_type
+    )
