@@ -23,6 +23,17 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="OneCrawler API", lifespan=lifespan)
 
+
+@app.get("/")
+async def root():
+    return {"message": "Welcome to OneCrawler API"}
+
+
+@app.get("/api/health")
+async def health():
+    return {"status": "ok"}
+
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,
@@ -30,12 +41,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-app.include_router(api_router, prefix="/api/v1")
 app.include_router(users_router, prefix="/api")
 app.include_router(security_router, prefix="/api")
-
-
-@app.get("/api/health")
-async def health():
-    return {"status": "ok"}
+app.include_router(api_router, prefix="/api/v1")
