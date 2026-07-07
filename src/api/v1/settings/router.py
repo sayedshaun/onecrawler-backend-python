@@ -20,9 +20,6 @@ def _require_provider(provider: str) -> None:
         raise HTTPException(status_code=404, detail=f"Unknown provider: {provider}")
 
 
-# ---- crawl settings templates ----
-
-
 @router.post("/templates", response_model=CrawlTemplateOut, status_code=status.HTTP_201_CREATED)
 async def create_crawl_template(payload: CrawlTemplateIn, db: AsyncSession = Depends(get_db)):
     try:

@@ -1,6 +1,6 @@
 import time
 import uuid
-from typing import Optional, get_args
+from typing import get_args
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -18,9 +18,7 @@ def now_ms() -> int:
 # ---- crawl settings templates ----
 
 
-async def create_template(
-    db: AsyncSession, name: str, settings: dict, filters: Optional[dict]
-) -> CrawlSettingsTemplate:
+async def create_template(db: AsyncSession, name: str, settings: dict, filters: dict | None) -> CrawlSettingsTemplate:
     template = CrawlSettingsTemplate(
         id=str(uuid.uuid4()),
         name=name,
@@ -40,7 +38,7 @@ async def list_templates(db: AsyncSession) -> list[CrawlSettingsTemplate]:
     return list(result.scalars().all())
 
 
-async def get_template(db: AsyncSession, template_id: str) -> Optional[CrawlSettingsTemplate]:
+async def get_template(db: AsyncSession, template_id: str) -> CrawlSettingsTemplate | None:
     return await db.get(CrawlSettingsTemplate, template_id)
 
 
@@ -49,7 +47,7 @@ async def update_template(
     template: CrawlSettingsTemplate,
     name: str,
     settings: dict,
-    filters: Optional[dict],
+    filters: dict | None,
 ) -> CrawlSettingsTemplate:
     template.name = name
     template.settings = settings
@@ -73,7 +71,7 @@ async def list_api_keys(db: AsyncSession) -> dict[str, ProviderApiKey]:
     return {row.provider: row for row in result.scalars().all()}
 
 
-async def get_api_key_value(db: AsyncSession, provider: str) -> Optional[str]:
+async def get_api_key_value(db: AsyncSession, provider: str) -> str | None:
     key = await db.get(ProviderApiKey, provider)
     return key.api_key if key else None
 

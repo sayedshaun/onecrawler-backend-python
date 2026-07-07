@@ -1,20 +1,21 @@
-"""initial schema
+"""Initial schema.
 
 Revision ID: 0001
 Revises:
 Create Date: 2026-07-05
-
 """
-from typing import Sequence, Union
 
-from alembic import op
+from collections.abc import Sequence
+
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
+from alembic import op
+
 revision: str = "0001"
-down_revision: Union[str, None] = None
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+down_revision: str | None = None
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
@@ -39,7 +40,9 @@ def upgrade() -> None:
     op.create_table(
         "discovered_urls",
         sa.Column("id", postgresql.UUID(as_uuid=False), primary_key=True),
-        sa.Column("job_id", postgresql.UUID(as_uuid=False), sa.ForeignKey("crawl_jobs.id", ondelete="CASCADE"), nullable=False),
+        sa.Column(
+            "job_id", postgresql.UUID(as_uuid=False), sa.ForeignKey("crawl_jobs.id", ondelete="CASCADE"), nullable=False
+        ),
         sa.Column("url", sa.String(), nullable=False),
         sa.Column("discovered_at", sa.BigInteger(), nullable=False),
         sa.Column("status", sa.String(), nullable=False, server_default="pending"),
@@ -49,7 +52,9 @@ def upgrade() -> None:
     op.create_table(
         "crawl_result_items",
         sa.Column("id", postgresql.UUID(as_uuid=False), primary_key=True),
-        sa.Column("job_id", postgresql.UUID(as_uuid=False), sa.ForeignKey("crawl_jobs.id", ondelete="CASCADE"), nullable=False),
+        sa.Column(
+            "job_id", postgresql.UUID(as_uuid=False), sa.ForeignKey("crawl_jobs.id", ondelete="CASCADE"), nullable=False
+        ),
         sa.Column("url", sa.String(), nullable=False),
         sa.Column("title", sa.String(), nullable=False, server_default=""),
         sa.Column("word_count", sa.Integer(), nullable=False, server_default="0"),
@@ -63,7 +68,9 @@ def upgrade() -> None:
     op.create_table(
         "log_lines",
         sa.Column("id", postgresql.UUID(as_uuid=False), primary_key=True),
-        sa.Column("job_id", postgresql.UUID(as_uuid=False), sa.ForeignKey("crawl_jobs.id", ondelete="CASCADE"), nullable=False),
+        sa.Column(
+            "job_id", postgresql.UUID(as_uuid=False), sa.ForeignKey("crawl_jobs.id", ondelete="CASCADE"), nullable=False
+        ),
         sa.Column("timestamp", sa.BigInteger(), nullable=False),
         sa.Column("level", sa.String(), nullable=False, server_default="info"),
         sa.Column("message", sa.Text(), nullable=False),

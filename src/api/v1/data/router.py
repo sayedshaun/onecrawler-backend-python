@@ -1,5 +1,3 @@
-from typing import Optional
-
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -12,9 +10,9 @@ router = APIRouter(prefix="/data", tags=["Data"])
 
 @router.get("", response_model=DataListOut)
 async def list_data(
-    job_id: Optional[str] = None,
-    format: Optional[str] = None,
-    q: Optional[str] = None,
+    job_id: str | None = None,
+    format: str | None = None,
+    q: str | None = None,
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
     db: AsyncSession = Depends(get_db),

@@ -1,11 +1,9 @@
-from typing import Optional
-
 from arq import create_pool
 from arq.connections import ArqRedis, RedisSettings
 
 from src.core.config import settings
 
-_pool: Optional[ArqRedis] = None
+_pool: ArqRedis | None = None
 
 
 async def get_arq_pool() -> ArqRedis:

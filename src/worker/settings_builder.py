@@ -1,12 +1,9 @@
-"""Maps the JSON payload stored on a CrawlJob (mirroring the UI's
-ui/src/lib/api-mapper.ts snake_case shape) onto real onecrawler.Settings /
-FilterChain objects."""
+"""Maps the JSON payload stored on a CrawlJob (mirroring the UI's ui/src/lib/api-mapper.ts snake_case shape) onto real
+onecrawler.Settings / FilterChain objects."""
 
 import re
-from typing import Any, Callable, Optional, Type
-
-from pydantic import BaseModel, create_model
-from sqlalchemy.ext.asyncio import AsyncSession
+from collections.abc import Callable
+from typing import Any
 
 from onecrawler import (
     BrowserSettings,
@@ -15,14 +12,16 @@ from onecrawler import (
     ProxySettings,
     Settings,
 )
-from onecrawler.filters.chain import AND, OR
 from onecrawler.filters import (
+    by_cosine_similarity,
     by_date,
     by_extension,
     by_files,
     by_keywords,
-    by_cosine_similarity,
 )
+from onecrawler.filters.chain import AND, OR
+from pydantic import BaseModel, create_model
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.api.v1.crawler.schema import CrawlSettingsIn, FilterGroupIn
 from src.api.v1.settings import crud as settings_crud
@@ -42,32 +41,26 @@ def _parse_field_type(type_str: str) -> tuple[Any, Any]:
     match = _OPTIONAL_RE.match(type_str)
     if match:
         py_type = _BASE_TYPES.get(match.group(1), str)
-        return Optional[py_type], None
+        return py_type | None, None
     py_type = _BASE_TYPES.get(type_str, str)
     return py_type, ...
 
 
-def build_output_schema(fields: dict[str, str]) -> Optional[Type[BaseModel]]:
+def build_output_schema(fields: dict[str, str]) -> type[BaseModel] | None:
     if not fields:
         return None
-    field_defs = {
-        name: _parse_field_type(type_str) for name, type_str in fields.items()
-    }
+    field_defs = {name: _parse_field_type(type_str) for name, type_str in fields.items()}
     return create_model("GenAIOutputSchema", **field_defs)
 
 
 async def build_settings(db: AsyncSession, payload: dict) -> Settings:
     s = CrawlSettingsIn(**payload)
 
-    proxies = (
-        [ProxySettings(**p.model_dump()) for p in s.proxies] if s.proxies else None
-    )
+    proxies = [ProxySettings(**p.model_dump()) for p in s.proxies] if s.proxies else None
 
     genai = None
     if s.genai:
-        api_key = s.genai.api_key or await settings_crud.get_api_key_value(
-            db, s.genai.provider
-        )
+        api_key = s.genai.api_key or await settings_crud.get_api_key_value(db, s.genai.provider)
         genai = GenerativeAISettings(
             provider=s.genai.provider,
             model_name=s.genai.model_name,
@@ -126,7 +119,7 @@ async def build_settings(db: AsyncSession, payload: dict) -> Settings:
     )
 
 
-def build_filter_chain(filters: Optional[dict]) -> Optional[Callable[[dict], bool]]:
+def build_filter_chain(filters: dict | None) -> Callable[[dict], bool] | None:
     if not filters:
         return None
 
@@ -145,9 +138,7 @@ def build_filter_chain(filters: Optional[dict]) -> Optional[Callable[[dict], boo
         elif node.kind == "by_extension":
             predicates.append(by_extension(node.extensions or []))
         elif node.kind == "by_cosine_similarity":
-            predicates.append(
-                by_cosine_similarity(node.query or "", node.threshold or 0.25)
-            )
+            predicates.append(by_cosine_similarity(node.query or "", node.threshold or 0.25))
 
     if not predicates:
         return None

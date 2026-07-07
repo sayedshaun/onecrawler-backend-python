@@ -2,13 +2,12 @@ import json
 import time
 from typing import Any
 
+from onecrawler import Crawler, LinkExtractor, UniversalSiteMap
 from sqlalchemy import select
 
 from src.db.models import CrawlJob, CrawlResultItem, DiscoveredUrl, LogLine
 from src.db.pg import async_session
 from src.worker.settings_builder import build_filter_chain, build_settings
-
-from onecrawler import Crawler, LinkExtractor, UniversalSiteMap
 
 
 def _now_ms() -> int:

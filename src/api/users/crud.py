@@ -1,5 +1,4 @@
 import uuid
-from typing import Optional
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -9,7 +8,7 @@ from src.core.security import hash_password
 from src.db.models import Users
 
 
-async def get_user_by_email(db: AsyncSession, email: str) -> Optional[Users]:
+async def get_user_by_email(db: AsyncSession, email: str) -> Users | None:
     result = await db.execute(select(Users).where(Users.email == email))
     return result.scalar_one_or_none()
 

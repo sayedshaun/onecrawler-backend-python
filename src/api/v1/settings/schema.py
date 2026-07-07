@@ -1,5 +1,3 @@
-from typing import Optional
-
 from pydantic import BaseModel, ConfigDict, Field
 from pydantic.alias_generators import to_camel
 
@@ -13,8 +11,8 @@ class InSchema(BaseModel):
 
 
 class OutSchema(BaseModel):
-    """Base for response payloads: serializes Python snake_case fields as camelCase
-    so the UI's existing `types.ts` interfaces can consume responses as-is."""
+    """Base for response payloads: serializes Python snake_case fields as camelCase so the UI's existing `types.ts`
+    interfaces can consume responses as-is."""
 
     model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True, from_attributes=True)
 
@@ -25,14 +23,14 @@ class OutSchema(BaseModel):
 class CrawlTemplateIn(InSchema):
     name: str
     settings: CrawlSettingsIn
-    filters: Optional[FilterGroupIn] = None
+    filters: FilterGroupIn | None = None
 
 
 class CrawlTemplateOut(OutSchema):
     id: str
     name: str
     settings: dict
-    filters: Optional[dict] = None
+    filters: dict | None = None
     created_at: int
     updated_at: int
 
@@ -52,4 +50,4 @@ class ApiKeyIn(InSchema):
 class ApiKeyOut(OutSchema):
     provider: GenAIProvider
     has_key: bool
-    updated_at: Optional[int] = None
+    updated_at: int | None = None

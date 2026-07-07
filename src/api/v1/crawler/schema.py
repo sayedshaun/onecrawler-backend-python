@@ -1,4 +1,4 @@
-from typing import Literal, Optional
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 from pydantic.alias_generators import to_camel
@@ -9,9 +9,7 @@ ScrapingOutputFormat = Literal["markdown", "json", "xml", "xmltei"]
 ProxyRotationMethod = Literal["round_robin", "random"]
 GenAIProvider = Literal["openai", "google", "ollama"]
 CrawlMode = Literal["sitemap", "link_extraction", "crawler"]
-FilterKind = Literal[
-    "by_date", "by_keywords", "by_files", "by_extension", "by_cosine_similarity"
-]
+FilterKind = Literal["by_date", "by_keywords", "by_files", "by_extension", "by_cosine_similarity"]
 FilterGroupMode = Literal["AND", "OR"]
 CrawlStatus = Literal["queued", "running", "completed", "failed", "cancelled"]
 
@@ -23,18 +21,16 @@ class InSchema(BaseModel):
 
 
 class OutSchema(BaseModel):
-    """Base for response payloads: serializes Python snake_case fields as camelCase
-    so the UI's existing `types.ts` interfaces can consume responses as-is."""
+    """Base for response payloads: serializes Python snake_case fields as camelCase so the UI's existing `types.ts`
+    interfaces can consume responses as-is."""
 
-    model_config = ConfigDict(
-        alias_generator=to_camel, populate_by_name=True, from_attributes=True
-    )
+    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True, from_attributes=True)
 
 
 class ProxySettingsIn(InSchema):
     server: str
-    username: Optional[str] = None
-    password: Optional[str] = None
+    username: str | None = None
+    password: str | None = None
 
 
 class ViewportIn(InSchema):
@@ -46,7 +42,7 @@ class BrowserSettingsIn(InSchema):
     viewport: ViewportIn
     locale: str = "en-US"
     timezone_id: str = "Asia/Dhaka"
-    user_agent: Optional[str] = None
+    user_agent: str | None = None
     headless: bool = True
     wait_until: Literal["load", "domcontentloaded", "networkidle"] = "domcontentloaded"
     timeout: int = 30000
@@ -63,21 +59,21 @@ class HumanBehaviorSettingsIn(InSchema):
 class GenAISettingsIn(InSchema):
     provider: GenAIProvider
     model_name: str
-    api_key: Optional[str] = None
-    base_url: Optional[str] = None
-    timeout: Optional[float] = None
+    api_key: str | None = None
+    base_url: str | None = None
+    timeout: float | None = None
     output_schema: dict[str, str] = Field(default_factory=dict)
 
 
 class FilterNodeIn(InSchema):
     kind: FilterKind
-    start: Optional[str] = None
-    end: Optional[str] = None
-    keywords: Optional[list[str]] = None
-    types: Optional[list[str]] = None
-    extensions: Optional[list[str]] = None
-    query: Optional[str] = None
-    threshold: Optional[float] = None
+    start: str | None = None
+    end: str | None = None
+    keywords: list[str] | None = None
+    types: list[str] | None = None
+    extensions: list[str] | None = None
+    query: str | None = None
+    threshold: float | None = None
 
 
 class FilterGroupIn(InSchema):
@@ -88,31 +84,31 @@ class FilterGroupIn(InSchema):
 class CrawlSettingsIn(InSchema):
     link_extraction_strategy: LinkExtractionStrategy = "deep"
     link_extraction_limit: int = 50
-    include_link_patterns: Optional[list[str]] = None
-    exclude_link_patterns: Optional[list[str]] = None
+    include_link_patterns: list[str] | None = None
+    exclude_link_patterns: list[str] | None = None
 
     scraping_strategy: ScrapingStrategy = "heuristic"
     scraping_output_format: ScrapingOutputFormat = "json"
-    genai: Optional[GenAISettingsIn] = None
+    genai: GenAISettingsIn | None = None
 
     concurrency: int = 10
     max_retries: int = 2
     request_timeout: int = 10
     retry_delay: int = 1
 
-    proxies: Optional[list[ProxySettingsIn]] = None
+    proxies: list[ProxySettingsIn] | None = None
     proxy_rotation_method: ProxyRotationMethod = "round_robin"
 
     browser_settings: BrowserSettingsIn
     enable_human_behaviors: bool = False
-    human_behavior_settings: Optional[HumanBehaviorSettingsIn] = None
+    human_behavior_settings: HumanBehaviorSettingsIn | None = None
 
 
 class CreateCrawlRequest(InSchema):
     target_url: str
     mode: CrawlMode
     settings: CrawlSettingsIn
-    filters: Optional[FilterGroupIn] = None
+    filters: FilterGroupIn | None = None
 
 
 class CrawlJobSummaryOut(OutSchema):
@@ -121,13 +117,13 @@ class CrawlJobSummaryOut(OutSchema):
     status: CrawlStatus
     mode: CrawlMode
     created_at: int
-    started_at: Optional[int] = None
-    finished_at: Optional[int] = None
+    started_at: int | None = None
+    finished_at: int | None = None
     urls_discovered: int
     urls_scraped: int
     urls_failed: int
     url_limit: int
-    error: Optional[str] = None
+    error: str | None = None
 
 
 class ThroughputPointOut(OutSchema):
