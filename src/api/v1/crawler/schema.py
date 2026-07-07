@@ -1,6 +1,7 @@
+from datetime import datetime
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 from pydantic.alias_generators import to_camel
 
 LinkExtractionStrategy = Literal["shallow", "deep"]
@@ -75,6 +76,17 @@ class FilterNodeIn(InSchema):
     query: str | None = None
     threshold: float | None = None
 
+    @field_validator("start", "end")
+    @classmethod
+    def _validate_date(cls, value: str | None) -> str | None:
+        if value is None:
+            return value
+        try:
+            datetime.strptime(value, "%Y-%m-%d")
+        except ValueError as exc:
+            raise ValueError("must be a date in YYYY-MM-DD format") from exc
+        return value
+
 
 class FilterGroupIn(InSchema):
     mode: FilterGroupMode = "AND"
@@ -105,6 +117,36 @@ class CrawlSettingsIn(InSchema):
 
 
 class CreateCrawlRequest(InSchema):
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "target_url": "https://example.com/blog",
+                "mode": "crawler",
+                "settings": {
+                    "link_extraction_strategy": "deep",
+                    "link_extraction_limit": 50,
+                    "scraping_strategy": "heuristic",
+                    "scraping_output_format": "json",
+                    "concurrency": 10,
+                    "max_retries": 2,
+                    "request_timeout": 10,
+                    "retry_delay": 1,
+                    "proxy_rotation_method": "round_robin",
+                    "browser_settings": {
+                        "viewport": {"width": 1280, "height": 800},
+                        "locale": "en-US",
+                        "timezone_id": "Asia/Dhaka",
+                        "headless": True,
+                        "wait_until": "domcontentloaded",
+                        "timeout": 30000,
+                    },
+                    "enable_human_behaviors": False,
+                },
+                "filters": None,
+            }
+        }
+    )
+
     target_url: str
     mode: CrawlMode
     settings: CrawlSettingsIn
