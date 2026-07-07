@@ -1,0 +1,13 @@
+# Dev overrides: bind-mounts source for live code changes and enables
+# uvicorn --reload. Run alongside the base file:
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+
+services:
+  fastapi:
+    volumes:
+      - .:/app
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+
+  arq:
+    volumes:
+      - .:/app
