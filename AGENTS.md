@@ -49,6 +49,16 @@ When changing behavior:
 - Prefer the standard library when possible.
 - Avoid adding new dependencies unless necessary.
 
+## OneCrawler (dependency)
+
+`onecrawler` (github.com/sayedshaun/onecrawler) is a crawling framework, published to PyPI and installed only in the `worker` image (see `Dockerfile`, `pip install .[worker]`) — it is not installed on the host or in the `api` image.
+
+When you need to check its actual API/behavior, don't guess from the GitHub README — inspect the installed source inside the worker container:
+
+    docker compose exec worker python -c "import onecrawler, os; print(os.path.dirname(onecrawler.__file__))"
+
+Then read the source under that path for the real classes/functions in use.
+
 ## Before Finishing
 
 Ensure:
