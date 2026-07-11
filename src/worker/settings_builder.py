@@ -24,7 +24,7 @@ from pydantic import BaseModel, create_model
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.api.v1.crawler.schema import CrawlSettingsIn, FilterGroupIn
-from src.api.v1.settings import crud as settings_crud
+from src.db.models import ProviderApiKey, ScrapingOutputFormat
 
 _BASE_TYPES: dict[str, type] = {
     "str": str,
@@ -55,7 +55,7 @@ def build_output_schema(fields: dict[str, str]) -> type[BaseModel] | None:
     return create_model("GenAIOutputSchema", **field_defs)
 
 
-async def build_settings(db: AsyncSession, payload: dict) -> Settings:
+async def build_settings(db: AsyncSession, payload: dict, user_id: str) -> Settings:
     s = CrawlSettingsIn(**payload)
 
     proxies = (
@@ -64,9 +64,10 @@ async def build_settings(db: AsyncSession, payload: dict) -> Settings:
 
     genai = None
     if s.genai:
-        api_key = s.genai.api_key or await settings_crud.get_api_key_value(
-            db, s.genai.provider
-        )
+        api_key = s.genai.api_key
+        if api_key is None:
+            provider_key = await db.get(ProviderApiKey, (user_id, s.genai.provider))
+            api_key = provider_key.api_key if provider_key else None
         genai = GenerativeAISettings(
             provider=s.genai.provider,
             model_name=s.genai.model_name,
@@ -109,7 +110,7 @@ async def build_settings(db: AsyncSession, payload: dict) -> Settings:
         include_link_patterns=s.include_link_patterns,
         exclude_link_patterns=s.exclude_link_patterns,
         scraping_strategy=s.scraping_strategy,
-        scraping_output_format=s.scraping_output_format,
+        scraping_output_format=ScrapingOutputFormat.JSON,
         genai=genai,
         concurrency=s.concurrency,
         max_retries=s.max_retries,

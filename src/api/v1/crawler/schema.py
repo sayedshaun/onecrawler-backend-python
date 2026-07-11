@@ -4,17 +4,16 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 from pydantic.alias_generators import to_camel
 
+from src.db.models import CrawlMode, CrawlStatus
+
 LinkExtractionStrategy = Literal["shallow", "deep"]
 ScrapingStrategy = Literal["heuristic", "genai"]
-ScrapingOutputFormat = Literal["markdown", "json", "xml", "xmltei"]
 ProxyRotationMethod = Literal["round_robin", "random"]
 GenAIProvider = Literal["openai", "google", "ollama"]
-CrawlMode = Literal["sitemap", "link_extraction", "crawler", "scraper"]
 FilterKind = Literal[
     "by_date", "by_keywords", "by_files", "by_extension", "by_cosine_similarity"
 ]
 FilterGroupMode = Literal["AND", "OR"]
-CrawlStatus = Literal["queued", "running", "completed", "failed", "cancelled"]
 
 
 class InSchema(BaseModel):
@@ -104,7 +103,6 @@ class CrawlSettingsIn(InSchema):
     exclude_link_patterns: list[str] | None = None
 
     scraping_strategy: ScrapingStrategy = "heuristic"
-    scraping_output_format: ScrapingOutputFormat = "json"
     genai: GenAISettingsIn | None = None
 
     concurrency: int = 10
@@ -130,7 +128,6 @@ class CreateCrawlRequest(InSchema):
                     "link_extraction_strategy": "deep",
                     "link_extraction_limit": 50,
                     "scraping_strategy": "heuristic",
-                    "scraping_output_format": "json",
                     "concurrency": 10,
                     "max_retries": 2,
                     "request_timeout": 10,

@@ -1,10 +1,7 @@
-from typing import Literal
-
 from pydantic import BaseModel, ConfigDict, Field
 from pydantic.alias_generators import to_camel
 
-CrawlMode = Literal["sitemap", "link_extraction", "crawler", "scraper"]
-CrawlStatus = Literal["queued", "running", "completed", "failed", "cancelled"]
+from src.db.models import CrawlMode, CrawlStatus
 
 
 class OutSchema(BaseModel):

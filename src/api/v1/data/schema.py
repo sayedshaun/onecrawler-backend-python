@@ -1,9 +1,7 @@
-from typing import Literal
-
 from pydantic import BaseModel, ConfigDict, Field
 from pydantic.alias_generators import to_camel
 
-ScrapingOutputFormat = Literal["markdown", "json", "xml", "xmltei"]
+from src.db.models import ScrapingOutputFormat
 
 
 class OutSchema(BaseModel):

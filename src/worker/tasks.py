@@ -5,7 +5,14 @@ from typing import Any
 from onecrawler import Crawler, LinkExtractor, Scraper, UniversalSiteMap
 from sqlalchemy import select
 
-from src.db.models import CrawlJob, CrawlResultItem, DiscoveredUrl, LogLine
+from src.db.models import (
+    CrawlJob,
+    CrawlMode,
+    CrawlResultItem,
+    CrawlStatus,
+    DiscoveredUrl,
+    LogLine,
+)
 from src.db.pg import async_session
 from src.worker.settings_builder import build_filter_chain, build_settings
 
@@ -47,24 +54,24 @@ async def _log(db, job_id: str, level: str, message: str) -> None:
 
 async def _is_cancelled(db, job_id: str) -> bool:
     status = await db.scalar(select(CrawlJob.status).where(CrawlJob.id == job_id))
-    return status == "cancelled"
+    return status == CrawlStatus.CANCELLED
 
 
 async def run_crawl_job(ctx, job_id: str) -> None:
     async with async_session() as db:
         job = await db.get(CrawlJob, job_id)
-        if job is None or job.status == "cancelled":
+        if job is None or job.status == CrawlStatus.CANCELLED:
             return
 
-        job.status = "running"
+        job.status = CrawlStatus.RUNNING
         job.started_at = _now_ms()
         await db.commit()
         await _log(db, job_id, "info", f"Starting {job.mode} job for {job.target_url}")
 
         try:
-            settings = await build_settings(db, job.settings)
+            settings = await build_settings(db, job.settings, job.user_id)
         except Exception as exc:
-            job.status = "failed"
+            job.status = CrawlStatus.FAILED
             job.error = f"Invalid settings: {exc}"
             job.finished_at = _now_ms()
             await db.commit()
@@ -72,25 +79,25 @@ async def run_crawl_job(ctx, job_id: str) -> None:
             return
 
         try:
-            if job.mode == "sitemap":
+            if job.mode == CrawlMode.SITEMAP:
                 cancelled = await _run_sitemap(db, job, settings)
-            elif job.mode == "link_extraction":
+            elif job.mode == CrawlMode.LINK_EXTRACTION:
                 cancelled = await _run_link_extraction(db, job, settings)
-            elif job.mode == "crawler":
+            elif job.mode == CrawlMode.CRAWLER:
                 filters = build_filter_chain(job.filters)
                 cancelled = await _run_crawler(db, job, settings, filters)
-            elif job.mode == "scraper":
+            elif job.mode == CrawlMode.SCRAPER:
                 cancelled = await _run_scraper(db, job, settings)
             else:
                 raise ValueError(f"Unknown crawl mode: {job.mode}")
 
-            job.status = "cancelled" if cancelled else "completed"
+            job.status = CrawlStatus.CANCELLED if cancelled else CrawlStatus.COMPLETED
             job.finished_at = _now_ms()
             await db.commit()
             await _log(db, job_id, "info", f"Job {job.status}")
 
         except Exception as exc:
-            job.status = "failed"
+            job.status = CrawlStatus.FAILED
             job.error = str(exc)
             job.finished_at = _now_ms()
             await db.commit()
