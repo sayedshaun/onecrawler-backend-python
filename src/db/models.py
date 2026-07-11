@@ -1,6 +1,7 @@
 import uuid
+from enum import StrEnum
 
-from sqlalchemy import BigInteger, ForeignKey, Integer, String, Text
+from sqlalchemy import BigInteger, ForeignKey, Integer, String, Text, UniqueConstraint
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -9,6 +10,28 @@ from src.db.base import Base
 
 def _uuid() -> str:
     return str(uuid.uuid4())
+
+
+class CrawlStatus(StrEnum):
+    QUEUED = "queued"
+    RUNNING = "running"
+    COMPLETED = "completed"
+    FAILED = "failed"
+    CANCELLED = "cancelled"
+
+
+class CrawlMode(StrEnum):
+    SITEMAP = "sitemap"
+    LINK_EXTRACTION = "link_extraction"
+    CRAWLER = "crawler"
+    SCRAPER = "scraper"
+
+
+class ScrapingOutputFormat(StrEnum):
+    MARKDOWN = "markdown"
+    JSON = "json"
+    XML = "xml"
+    XMLTEI = "xmltei"
 
 
 class Users(Base):
@@ -30,9 +53,14 @@ class CrawlJob(Base):
     id: Mapped[str] = mapped_column(
         UUID(as_uuid=False), primary_key=True, default=_uuid
     )
+    user_id: Mapped[str] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
     target_url: Mapped[str] = mapped_column(String, nullable=False)
     mode: Mapped[str] = mapped_column(String, nullable=False)
-    status: Mapped[str] = mapped_column(String, nullable=False, default="queued")
+    status: Mapped[str] = mapped_column(
+        String, nullable=False, default=CrawlStatus.QUEUED
+    )
 
     settings: Mapped[dict] = mapped_column(JSONB, nullable=False)
     filters: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
@@ -111,11 +139,19 @@ class LogLine(Base):
 
 class CrawlSettingsTemplate(Base):
     __tablename__ = "crawl_settings_templates"
+    __table_args__ = (
+        UniqueConstraint(
+            "user_id", "name", name="uq_crawl_settings_templates_user_id_name"
+        ),
+    )
 
     id: Mapped[str] = mapped_column(
         UUID(as_uuid=False), primary_key=True, default=_uuid
     )
-    name: Mapped[str] = mapped_column(String, nullable=False, unique=True)
+    user_id: Mapped[str] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    name: Mapped[str] = mapped_column(String, nullable=False)
     settings: Mapped[dict] = mapped_column(JSONB, nullable=False)
     filters: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
     created_at: Mapped[int] = mapped_column(BigInteger, nullable=False)
@@ -125,6 +161,9 @@ class CrawlSettingsTemplate(Base):
 class ProviderApiKey(Base):
     __tablename__ = "provider_api_keys"
 
+    user_id: Mapped[str] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), primary_key=True
+    )
     provider: Mapped[str] = mapped_column(String, primary_key=True)
     api_key: Mapped[str] = mapped_column(Text, nullable=False)
     updated_at: Mapped[int] = mapped_column(BigInteger, nullable=False)
