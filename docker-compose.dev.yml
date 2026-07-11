@@ -13,6 +13,7 @@ services:
   ngrok:
     image: ngrok/ngrok:latest
     container_name: onecrawler-ngrok
+    restart: unless-stopped
     environment:
       - NGROK_AUTHTOKEN=${NGROK_AUTHTOKEN}
     command: [ "http", "fastapi:8000" ]
