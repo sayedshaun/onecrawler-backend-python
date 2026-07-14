@@ -347,6 +347,53 @@ async def cancel_crawl(
     return job
 
 
+@router.post(
+    "/{job_id}/retry",
+    response_model=CrawlJobSummaryOut,
+    status_code=status.HTTP_201_CREATED,
+)
+async def retry_crawl(
+    job_id: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: CurrentUser = Depends(get_current_user),
+):
+    source_job = await db.scalar(
+        select(CrawlJob).where(
+            CrawlJob.id == job_id, CrawlJob.user_id == current_user.id
+        )
+    )
+    if source_job is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Crawl job not found"
+        )
+    if source_job.status != CrawlStatus.FAILED:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Only failed crawl jobs can be retried",
+        )
+
+    job = CrawlJob(
+        id=str(uuid.uuid4()),
+        user_id=source_job.user_id,
+        target_url=source_job.target_url,
+        mode=source_job.mode,
+        status=CrawlStatus.QUEUED,
+        settings=source_job.settings,
+        filters=source_job.filters,
+        seed_urls=source_job.seed_urls,
+        created_at=int(time.time() * 1000),
+        url_limit=source_job.url_limit,
+    )
+    db.add(job)
+    await db.commit()
+    await db.refresh(job)
+
+    pool = await get_arq_pool()
+    await pool.enqueue_job("run_crawl_job", job.id, _job_id=job.id)
+
+    return job
+
+
 @router.delete("/{job_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_crawl(
     job_id: str,
