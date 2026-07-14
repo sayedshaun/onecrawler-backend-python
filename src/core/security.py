@@ -41,18 +41,22 @@ def create_access_token(
     )
 
 
-def create_refresh_token(user_id: str) -> str:
+def create_refresh_token(user_id: str) -> tuple[str, str, datetime]:
+    """Returns (token, jti, expires_at) so the caller can persist a session row."""
     now = datetime.now(UTC)
+    jti = str(uuid.uuid4())
+    expires_at = now + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
     payload = {
         "sub": user_id,
         "type": "refresh",
-        "jti": str(uuid.uuid4()),
+        "jti": jti,
         "iat": now,
-        "exp": now + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS),
+        "exp": expires_at,
     }
-    return jwt.encode(
+    token = jwt.encode(
         payload, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM
     )
+    return token, jti, expires_at
 
 
 def decode_access_token(token: str) -> dict[str, Any]:

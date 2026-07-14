@@ -47,6 +47,18 @@ class Users(Base):
     user_type: Mapped[str] = mapped_column(String, nullable=False, default="user")
 
 
+class RefreshSession(Base):
+    __tablename__ = "refresh_sessions"
+
+    jti: Mapped[str] = mapped_column(UUID(as_uuid=False), primary_key=True)
+    user_id: Mapped[str] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    created_at: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    expires_at: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    revoked_at: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+
+
 class CrawlJob(Base):
     __tablename__ = "crawl_jobs"
 

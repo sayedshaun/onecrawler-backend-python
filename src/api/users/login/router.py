@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.api.users.login.schema import LoginRequest, TokenOut
 from src.core.config import settings
 from src.core.security import create_access_token, create_refresh_token, verify_password
+from src.core.sessions import record_refresh_session
 from src.db.models import Users
 from src.db.pg import get_db
 
@@ -29,7 +30,10 @@ async def login(payload: LoginRequest, db: AsyncSession = Depends(get_db)):
     token = create_access_token(
         user_id=user.id, email=user.email, user_type=user.user_type, name=user.name
     )
-    refresh_token = create_refresh_token(user_id=user.id)
+    refresh_token, jti, expires_at = create_refresh_token(user_id=user.id)
+    await record_refresh_session(db, user_id=user.id, jti=jti, expires_at=expires_at)
+    await db.commit()
+
     return TokenOut(
         access_token=token,
         refresh_token=refresh_token,
