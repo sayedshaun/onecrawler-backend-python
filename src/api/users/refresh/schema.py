@@ -17,9 +17,12 @@ class OutSchema(BaseModel):
     )
 
 
-class LogoutRequest(InSchema):
-    refresh_token: str | None = None
+class RefreshRequest(InSchema):
+    refresh_token: str
 
 
-class LogoutOut(OutSchema):
-    detail: str
+class RefreshOut(OutSchema):
+    access_token: str
+    refresh_token: str
+    token_type: str = "bearer"
+    expires_in: int

@@ -31,9 +31,24 @@ def create_access_token(
         "email": email,
         "user_type": user_type,
         "name": name,
+        "type": "access",
         "jti": str(uuid.uuid4()),
         "iat": now,
         "exp": now + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES),
+    }
+    return jwt.encode(
+        payload, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM
+    )
+
+
+def create_refresh_token(user_id: str) -> str:
+    now = datetime.now(UTC)
+    payload = {
+        "sub": user_id,
+        "type": "refresh",
+        "jti": str(uuid.uuid4()),
+        "iat": now,
+        "exp": now + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS),
     }
     return jwt.encode(
         payload, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM

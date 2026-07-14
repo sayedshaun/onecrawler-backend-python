@@ -36,6 +36,9 @@ async def get_current_user(
     except jwt.PyJWTError:
         raise unauthorized
 
+    if payload.get("type") != "access":
+        raise unauthorized
+
     jti = payload.get("jti")
     redis = await get_arq_pool()
     if jti and await redis.exists(f"blocklist:{jti}"):

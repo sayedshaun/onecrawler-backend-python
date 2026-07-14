@@ -18,6 +18,7 @@ class Settings(BaseSettings):
     JWT_SECRET_KEY: str = "dev-secret-change-me"
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
+    REFRESH_TOKEN_EXPIRE_DAYS: int = 30
 
     DEFAULT_ADMIN_NAME: str = "Shaun"
     DEFAULT_ADMIN_EMAIL: str = "sayedshaun4@gmail.com"
