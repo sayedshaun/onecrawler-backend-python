@@ -15,6 +15,7 @@ from src.api.users.account.schema import (
 from src.api.users.register.schema import UserOut
 from src.api.v1.dashboard.schema import JobCountsOut
 from src.core.security import hash_password, verify_password
+from src.core.sessions import revoke_all_refresh_sessions
 from src.db.models import CrawlJob, CrawlStatus, Users
 from src.db.pg import get_db
 
@@ -99,6 +100,7 @@ async def change_password(
         )
 
     user.hashed_password = hash_password(payload.new_password)
+    await revoke_all_refresh_sessions(db, user_id=user.id)
     await db.commit()
     return ChangePasswordOut(detail="Password updated")
 

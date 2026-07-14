@@ -1,6 +1,7 @@
 import time
 from datetime import datetime
 
+from sqlalchemy import update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.db.models import RefreshSession
@@ -23,3 +24,11 @@ async def revoke_refresh_session(db: AsyncSession, jti: str) -> None:
     session = await db.get(RefreshSession, jti)
     if session is not None and session.revoked_at is None:
         session.revoked_at = int(time.time() * 1000)
+
+
+async def revoke_all_refresh_sessions(db: AsyncSession, user_id: str) -> None:
+    await db.execute(
+        update(RefreshSession)
+        .where(RefreshSession.user_id == user_id, RefreshSession.revoked_at.is_(None))
+        .values(revoked_at=int(time.time() * 1000))
+    )
