@@ -1,5 +1,5 @@
-"""Add user_id to crawl_settings_templates and provider_api_keys so both are
-scoped to their owner, matching crawl_jobs.
+"""Add user_id to crawl_settings_templates and provider_api_keys so both are scoped to
+their owner, matching crawl_jobs.
 
 Revision ID: 0008
 Revises: 0007
