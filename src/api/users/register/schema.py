@@ -18,12 +18,34 @@ class OutSchema(BaseModel):
 
 
 class RegisterRequest(InSchema):
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "name": "Jane Doe",
+                "email": "jane.doe@example.com",
+                "password": "correct-horse-battery-staple",
+            }
+        }
+    )
+
     name: str = Field(min_length=1)
     email: EmailStr
     password: str = Field(min_length=8)
 
 
 class UserOut(OutSchema):
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "id": "8f14e45f-ceea-4d3a-8bd0-8a5f2b1c9e10",
+                "name": "Jane Doe",
+                "email": "jane.doe@example.com",
+                "userType": "standard",
+                "isActive": True,
+            }
+        }
+    )
+
     id: str
     name: str
     email: str
