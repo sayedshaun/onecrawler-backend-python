@@ -20,24 +20,68 @@ class OutSchema(BaseModel):
 
 
 class RenameRequest(InSchema):
+    model_config = ConfigDict(json_schema_extra={"example": {"name": "Jane Doe"}})
+
     name: str = Field(min_length=1)
 
 
 class ChangeEmailRequest(InSchema):
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "email": "jane.new@example.com",
+                "password": "correct-horse-battery-staple",
+            }
+        }
+    )
+
     email: EmailStr
     password: str
 
 
 class ChangePasswordRequest(InSchema):
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "current_password": "correct-horse-battery-staple",
+                "new_password": "another-strong-password-1",
+            }
+        }
+    )
+
     current_password: str
     new_password: str = Field(min_length=8)
 
 
 class ChangePasswordOut(OutSchema):
+    model_config = ConfigDict(
+        json_schema_extra={"example": {"detail": "Password changed successfully"}}
+    )
+
     detail: str
 
 
 class UsageOut(OutSchema):
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "totalJobs": 18,
+                "jobCounts": {
+                    "queued": 1,
+                    "running": 2,
+                    "completed": 14,
+                    "failed": 1,
+                    "cancelled": 0,
+                },
+                "urlsDiscovered": 940,
+                "urlsScraped": 905,
+                "urlsFailed": 12,
+                "jobsThisMonth": 6,
+                "urlsScrapedThisMonth": 310,
+            }
+        }
+    )
+
     total_jobs: int
     job_counts: JobCountsOut
     urls_discovered: int
