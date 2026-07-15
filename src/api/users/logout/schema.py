@@ -18,8 +18,18 @@ class OutSchema(BaseModel):
 
 
 class LogoutRequest(InSchema):
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {"refresh_token": "8f14e45f-ceea-4d3a-8bd0-8a5f2b1c9e10"}
+        }
+    )
+
     refresh_token: str | None = None
 
 
 class LogoutOut(OutSchema):
+    model_config = ConfigDict(
+        json_schema_extra={"example": {"detail": "Logged out successfully"}}
+    )
+
     detail: str
