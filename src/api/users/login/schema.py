@@ -18,11 +18,31 @@ class OutSchema(BaseModel):
 
 
 class LoginRequest(InSchema):
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "email": "jane.doe@example.com",
+                "password": "correct-horse-battery-staple",
+            }
+        }
+    )
+
     email: EmailStr
     password: str
 
 
 class TokenOut(OutSchema):
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                "refreshToken": "8f14e45f-ceea-4d3a-8bd0-8a5f2b1c9e10",
+                "tokenType": "bearer",
+                "expiresIn": 3600,
+            }
+        }
+    )
+
     access_token: str
     refresh_token: str
     token_type: str = "bearer"
