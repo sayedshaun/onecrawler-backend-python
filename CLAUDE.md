@@ -48,6 +48,12 @@ When changing behavior:
 - Prefer the standard library when possible.
 - Avoid adding new dependencies unless necessary.
 
+## Commit Rules
+
+- Commit messages must be short: one line, imperative mood, `type: description` (e.g. `fix: correct token expiry check`).
+- No body/explanation unless explicitly asked for.
+- Commit one logical change (typically one file) at a time rather than bundling unrelated changes.
+
 ## Before Finishing
 
 Ensure:
