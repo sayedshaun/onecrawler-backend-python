@@ -22,7 +22,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-worker = ["onecrawler[genai] @ git+https://github.com/sayedshaun/onecrawler.git"]
+worker = ["onecrawler @ git+https://github.com/sayedshaun/onecrawler.git"]
 
 [tool.setuptools.packages.find]
 where = ["."]

@@ -43,7 +43,7 @@ flowchart LR
 The API and worker are split into separate containers built from the same [Dockerfile](Dockerfile) with different targets:
 
 - **`api`** — only enqueues jobs onto Redis via [arq](https://arq-docs.helpmanual.io/); it never imports `onecrawler` or launches a browser, so its image stays small.
-- **`worker`** — actually drives `onecrawler` + Playwright, so it installs the full `onecrawler[genai]` extra and Chromium.
+- **`worker`** — actually drives `onecrawler` + Playwright, so it installs the `onecrawler` package (GenAI extraction is a core dependency now, no extra needed) and Chromium.
 
 A one-off **`migrate`** service runs `alembic upgrade head` before `fastapi`/`arq` start (see [docker-compose.yml](docker-compose.yml)).
 
@@ -289,10 +289,11 @@ A crawl job (`POST /api/v1/crawls`) picks one **mode**:
 
 For `crawler` mode, `scraping_strategy` controls how page content is turned into structured data:
 
-- `heuristic` — fixed extraction fields (title, text, metadata) via `onecrawler`'s built-in parser.
+- `heuristic` — fixed extraction fields (title, text, metadata) via `onecrawler`'s built-in parser. Article/news-biased; can return little or nothing on non-article pages.
 - `genai` — an LLM extracts fields matching a caller-defined `output_schema` (arbitrary field names/types).
+- `markdownify` — faithful whole-page HTML-to-Markdown conversion; no content extraction or metadata, but never returns empty for a rendered page. Useful for non-article pages (e-commerce, dashboards, docs) where `heuristic` falls short.
 
-Because these two strategies produce differently-shaped output, `CrawlResultItem.content` is stored as `JSONB` rather than a fixed set of columns.
+Because these strategies produce differently-shaped output, `CrawlResultItem.content` is stored as `JSONB` rather than a fixed set of columns.
 
 Optional `filters` (AND/OR trees of `FilterNodeIn` nodes) narrow which discovered pages get scraped: `by_date` (validated as `YYYY-MM-DD`), `by_keywords`, `by_files`, `by_extension`, `by_cosine_similarity`.
 

@@ -7,8 +7,8 @@ from typing import Any
 
 from onecrawler import (
     BrowserSettings,
-    GenerativeAISettings,
     HumanBehaviorSettings,
+    LLMSettings,
     ProxySettings,
     Settings,
 )
@@ -55,6 +55,14 @@ def build_output_schema(fields: dict[str, str]) -> type[BaseModel] | None:
     return create_model("GenAIOutputSchema", **field_defs)
 
 
+def _to_link_patterns(keywords: list[str] | None) -> list[str] | None:
+    """Expands plain path keywords (e.g. "sports") into onecrawler's glob
+    patterns (e.g. "/sports/*"), which is the shape it matches URL paths against."""
+    if not keywords:
+        return None
+    return [f"/{keyword.strip('/')}/*" for keyword in keywords]
+
+
 async def build_settings(db: AsyncSession, payload: dict, user_id: str) -> Settings:
     s = CrawlSettingsIn(**payload)
 
@@ -68,7 +76,7 @@ async def build_settings(db: AsyncSession, payload: dict, user_id: str) -> Setti
         if api_key is None:
             provider_key = await db.get(ProviderApiKey, (user_id, s.genai.provider))
             api_key = provider_key.api_key if provider_key else None
-        genai = GenerativeAISettings(
+        genai = LLMSettings(
             provider=s.genai.provider,
             model_name=s.genai.model_name,
             api_key=api_key,
@@ -91,24 +99,25 @@ async def build_settings(db: AsyncSession, payload: dict, user_id: str) -> Setti
     if s.browser_settings.user_agent:
         browser_kwargs["user_agent"] = s.browser_settings.user_agent
 
-    human_behavior = (
-        HumanBehaviorSettings(
-            min_delay=s.human_behavior_settings.min_delay,
-            max_delay=s.human_behavior_settings.max_delay,
-            max_scrolls=s.human_behavior_settings.max_scrolls,
-            min_mouse_moves=s.human_behavior_settings.min_mouse_moves,
-            max_mouse_moves=s.human_behavior_settings.max_mouse_moves,
+    human_behavior = None
+    if s.enable_human_behaviors:
+        human_behavior = (
+            HumanBehaviorSettings(
+                min_delay=s.human_behavior_settings.min_delay,
+                max_delay=s.human_behavior_settings.max_delay,
+                max_scrolls=s.human_behavior_settings.max_scrolls,
+                min_mouse_moves=s.human_behavior_settings.min_mouse_moves,
+                max_mouse_moves=s.human_behavior_settings.max_mouse_moves,
+            )
+            if s.human_behavior_settings
+            else HumanBehaviorSettings()
         )
-        if s.human_behavior_settings
-        else HumanBehaviorSettings()
-    )
 
     return Settings(
-        verbose=False,
         link_extraction_strategy=s.link_extraction_strategy,
         link_extraction_limit=s.link_extraction_limit,
-        include_link_patterns=s.include_link_patterns,
-        exclude_link_patterns=s.exclude_link_patterns,
+        include_link_patterns=_to_link_patterns(s.include_link_patterns),
+        exclude_link_patterns=_to_link_patterns(s.exclude_link_patterns),
         scraping_strategy=s.scraping_strategy,
         scraping_output_format=ScrapingOutputFormat.JSON,
         genai=genai,
@@ -120,8 +129,6 @@ async def build_settings(db: AsyncSession, payload: dict, user_id: str) -> Setti
         proxy_rotation_method=s.proxy_rotation_method,
         browser_settings=BrowserSettings(**browser_kwargs),
         show_progress=False,
-        enable_logging=False,
-        enable_human_behaviors=s.enable_human_behaviors,
         human_behavior_settings=human_behavior,
     )
 
